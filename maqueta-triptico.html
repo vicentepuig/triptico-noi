@@ -1,0 +1,478 @@
+<title>Maqueta Tríptico Legal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: panel de control fijo a la izquierda + escenario 3D a sangre; en móvil se apilan */
+:root{
+  --bg:#f4f5f3; --panel:#ffffff; --stage:#e3e5e1; --fg:#1b1d1a; --muted:#6d726a;
+  --line:#dcdfd9; --accent:#2f5bd3; --accent-ink:#ffffff; --chip:#eef0ec;
+  --f-ui:"Inter Tight",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141613; --panel:#1b1d1a; --stage:#232622; --fg:#ecefe9; --muted:#9aa096;
+  --line:#30342e; --accent:#7f9cff; --accent-ink:#0f1320; --chip:#262924; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141613; --panel:#1b1d1a; --stage:#232622; --fg:#ecefe9; --muted:#9aa096;
+  --line:#30342e; --accent:#7f9cff; --accent-ink:#0f1320; --chip:#262924; color-scheme:dark}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px}
+.app{display:grid;grid-template-columns:360px 1fr;height:100%}
+.side{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;
+  padding-block:24px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:20px;
+  display:flex;flex-direction:column;gap:22px}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+h1{font-size:24px;line-height:1.1;margin:0;font-weight:700;text-wrap:balance;letter-spacing:-.01em}
+.spec{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.6}
+section{display:flex;flex-direction:column;gap:10px}
+h2{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.drops{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.drop{position:relative;border:1.5px dashed var(--line);border-radius:10px;padding:12px 10px;cursor:pointer;
+  display:flex;flex-direction:column;gap:4px;min-width:0;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--chip)}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.drop strong{font-size:13px}
+.drop span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop.loaded{border-style:solid;border-color:var(--accent)}
+.hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+.warn{font-size:12px;color:#b5651d;margin:0}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+button.pill{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--fg);
+  border-radius:999px;padding:7px 14px;cursor:pointer}
+button.pill:hover{border-color:var(--fg)}
+button.pill.on{background:var(--fg);color:var(--panel);border-color:var(--fg)}
+button.pill:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.slider{display:flex;align-items:center;gap:10px}
+.slider input{flex:1;accent-color:var(--accent)}
+.slider output{font-family:var(--f-mono);font-size:12px;width:44px;text-align:right;font-variant-numeric:tabular-nums}
+label.check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+label.check input{accent-color:var(--accent);width:16px;height:16px}
+.sheet{display:flex;flex-direction:column;gap:4px}
+.sheet .cap{display:flex;justify-content:space-between;font-size:12px}
+.sheet .cap em{font-style:normal;font-family:var(--f-mono);color:var(--muted);font-size:11px}
+.cells{display:grid;grid-template-columns:repeat(3,1fr);aspect-ratio:14/8.5;max-width:100%;border:1px solid var(--line);
+  border-radius:4px;overflow:hidden;background-size:100% 100%;background-color:var(--chip)}
+.cell{border-right:1px dashed rgba(0,0,0,.35);display:flex;flex-direction:column;justify-content:flex-end;padding:4px}
+.cell:last-child{border-right:0}
+.tag{align-self:flex-start;font-size:10px;font-weight:600;background:var(--panel);color:var(--fg);border-radius:4px;padding:2px 5px;
+  box-shadow:0 1px 2px rgba(0,0,0,.15);line-height:1.2}
+.tag.cover{background:var(--accent);color:var(--accent-ink)}
+.tag b{font-family:var(--f-mono);font-weight:500}
+.stage{position:relative;background:var(--stage);min-width:0;overflow:hidden}
+#c{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:16px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none;right:16px}
+.hud div{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;font-family:var(--f-mono)}
+.droptip{position:absolute;inset:12px;border:2px dashed var(--accent);border-radius:14px;display:grid;place-items:center;
+  font-size:16px;font-weight:600;background:color-mix(in srgb,var(--stage) 80%,transparent);pointer-events:none}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr;grid-template-rows:58vh auto;height:auto}
+  .stage{order:-1;height:58vh}
+  .side{border-right:0;overflow:visible;padding-right:max(16px,env(safe-area-inset-right,0px));padding-left:max(16px,env(safe-area-inset-left,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <header>
+      <p class="eyebrow">Maqueta 3D · plegado en Z</p>
+      <h1>Tríptico tamaño legal</h1>
+      <p class="spec">Hoja 355,6 × 215,9 mm (14 × 8,5 in)<br>3 cuerpos iguales de 118,5 × 215,9 mm</p>
+    </header>
+
+    <section>
+      <h2>Arte</h2>
+      <div class="drops">
+        <label class="drop" id="dropT"><strong>Tiro</strong><span id="nameT">Ejemplo cargado</span>
+          <input type="file" id="fileT" accept="image/*,application/pdf"></label>
+        <label class="drop" id="dropR"><strong>Retiro</strong><span id="nameR">Ejemplo cargado</span>
+          <input type="file" id="fileR" accept="image/*,application/pdf"></label>
+      </div>
+      <p class="hint">Sube cada cara como hoja completa en horizontal (PNG, JPG o PDF). Un PDF de 2 páginas en Tiro llena ambas caras. También puedes arrastrar los archivos sobre la maqueta.</p>
+      <p class="warn" id="warn" hidden></p>
+      <div class="row"><button class="pill" id="resetArt" type="button">Volver al ejemplo</button></div>
+    </section>
+
+    <section>
+      <h2>Plegado</h2>
+      <div class="slider"><input type="range" id="fold" min="0" max="100" value="42"><output id="foldOut">42%</output></div>
+      <div class="row">
+        <button class="pill" data-fold="0" type="button">Abierto</button>
+        <button class="pill" data-fold="42" type="button">Zigzag</button>
+        <button class="pill" data-fold="100" type="button">Cerrado</button>
+        <button class="pill" id="play" type="button">Animar</button>
+      </div>
+      <label class="check"><input type="checkbox" id="invert"> Invertir sentido del pliegue</label>
+    </section>
+
+    <section>
+      <h2>Vista</h2>
+      <div class="row">
+        <button class="pill on" data-view="iso" type="button">3/4</button>
+        <button class="pill" data-view="front" type="button">Frente</button>
+        <button class="pill" data-view="back" type="button">Atrás</button>
+        <button class="pill" data-view="top" type="button">Arriba</button>
+      </div>
+      <label class="check"><input type="checkbox" id="guides" checked> Mostrar líneas de plegado y margen 5 mm</label>
+      <label class="check"><input type="checkbox" id="realistic"> Iluminación realista (el color se desvía del archivo)</label>
+    </section>
+
+    <section>
+      <h2>Compaginación</h2>
+      <div class="sheet"><div class="cap"><span>Tiro</span><em>visto de frente</em></div><div class="cells" id="miniT"></div></div>
+      <div class="sheet"><div class="cap"><span>Retiro</span><em>volteo por lado largo</em></div><div class="cells" id="miniR"></div></div>
+      <p class="hint" id="explain"></p>
+    </section>
+  </aside>
+
+  <main class="stage" id="stage">
+    <canvas id="c" aria-label="Maqueta 3D del tríptico"></canvas>
+    <div class="hud"><div id="hudCover"></div><div id="hudBack"></div></div>
+    <div class="droptip" id="droptip" hidden>Suelta aquí: 1.º Tiro, 2.º Retiro</div>
+  </main>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ---------- medidas ---------- */
+const SHEET_MM = [355.6, 215.9];
+const W = 3.556, H = 2.159, PW = W / 3;        // unidades = decímetros
+const TEX_W = 2800, TEX_H = Math.round(TEX_W * SHEET_MM[1] / SHEET_MM[0]);
+const PX_MM = TEX_W / SHEET_MM[0];
+
+/* ---------- estado ---------- */
+const art = { T: null, R: null };              // canvas con el arte subido
+let foldT = 0.42, sign = 1, showGuides = true, playing = false;
+
+/* ---------- arte de ejemplo ---------- */
+function roleMap() {
+  // f = cuerpo que se pliega hacia delante (0 = izquierdo, 2 = derecho)
+  const f = sign > 0 ? 0 : 2, b = 2 - f;
+  const m = { T: ['', '', ''], R: ['', '', ''] };
+  m.R[2 - f] = 'Portada';
+  m.T[b] = 'Contraportada';
+  m.T[f] = '1.ª apertura'; m.T[1] = '1.ª apertura';
+  m.R[1] = 'Reverso'; m.R[f === 0 ? 0 : 2] = 'Reverso';
+  return m;
+}
+function drawSample(ctx, side) {
+  const roles = roleMap()[side];
+  const pw = TEX_W / 3;
+  const bgs = side === 'T' ? ['#f2efe6', '#e8eef7', '#f6e9e4'] : ['#e6efe9', '#f1ece0', '#ebe7f3'];
+  for (let i = 0; i < 3; i++) {
+    const x = i * pw;
+    ctx.fillStyle = bgs[i]; ctx.fillRect(x, 0, pw, TEX_H);
+    ctx.fillStyle = side === 'T' ? '#2f5bd3' : '#1f7a55';
+    ctx.font = `700 ${TEX_H * 0.38}px "Inter Tight", system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(side === 'T' ? i + 1 : i + 4), x + pw / 2, TEX_H * 0.42);
+    ctx.font = `600 ${TEX_H * 0.055}px "Inter Tight", system-ui, sans-serif`;
+    ctx.fillStyle = '#1b1d1a';
+    ctx.fillText((side === 'T' ? 'TIRO ' : 'RETIRO ') + (i + 1), x + pw / 2, TEX_H * 0.70);
+    ctx.font = `500 ${TEX_H * 0.045}px "Inter Tight", system-ui, sans-serif`;
+    ctx.fillStyle = '#555';
+    ctx.fillText(roles[i], x + pw / 2, TEX_H * 0.78);
+    // flecha "arriba" para revisar orientación
+    ctx.font = `500 ${TEX_H * 0.035}px "JetBrains Mono", monospace`;
+    ctx.fillText('▲ arriba', x + pw / 2, TEX_H * 0.08);
+  }
+}
+function drawGuides(ctx) {
+  const m = 5 * PX_MM, pw = TEX_W / 3;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(220,40,60,.85)'; ctx.lineWidth = 3; ctx.setLineDash([22, 14]);
+  for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(i * pw, 0); ctx.lineTo(i * pw, TEX_H); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(0,160,200,.7)'; ctx.lineWidth = 2; ctx.setLineDash([8, 8]);
+  for (let i = 0; i < 3; i++) ctx.strokeRect(i * pw + m, m, pw - 2 * m, TEX_H - 2 * m);
+  ctx.restore();
+}
+
+/* ---------- three.js ---------- */
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.target.set(0, 0, 0);
+controls.minDistance = 2.5; controls.maxDistance = 16;
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0xbfc3bb, 1.6);
+scene.add(hemi);
+const key = new THREE.DirectionalLight(0xffffff, 1.6);
+key.position.set(3, 6, 4); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6;
+Object.assign(key.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 20 });
+scene.add(key);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.16 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -H / 2 - 0.001; ground.receiveShadow = true;
+scene.add(ground);
+
+const texCanvas = { T: document.createElement('canvas'), R: document.createElement('canvas') };
+const tex = {};
+for (const s of ['T', 'R']) {
+  texCanvas[s].width = TEX_W; texCanvas[s].height = TEX_H;
+  tex[s] = new THREE.CanvasTexture(texCanvas[s]);
+  tex[s].colorSpace = THREE.SRGBColorSpace;
+  tex[s].anisotropy = renderer.capabilities.getMaxAnisotropy();
+}
+/* Color fiel: material sin iluminación (el píxel del archivo sale tal cual) con un
+   sombreado suave según el ángulo respecto de la cámara. La cara que mira de frente
+   se ve exactamente con el color del archivo. */
+let faithful = true;
+const sheetMeshes = [];
+const _n = new THREE.Vector3(), _p = new THREE.Vector3(), _v = new THREE.Vector3();
+function shadeMeshes() {
+  for (const m of sheetMeshes) {
+    if (!faithful) continue;
+    m.getWorldDirection(_n); m.getWorldPosition(_p);
+    _v.subVectors(camera.position, _p).normalize();
+    const d = Math.max(0, _n.dot(_v));
+    m.material.color.setScalar(0.74 + 0.26 * d);
+  }
+}
+function setFaithful(on) {
+  faithful = on;
+  for (const m of sheetMeshes) m.material = on ? m.userData.basic : m.userData.std;
+  hemi.intensity = on ? 1.6 : 0.9;
+  key.intensity = on ? 1.6 : 1.3;
+}
+
+function panelGeo(i, back) {
+  const g = new THREE.PlaneGeometry(PW, H);
+  const a = i / 3, b = (i + 1) / 3, uv = g.attributes.uv;
+  for (let k = 0; k < uv.count; k++) {
+    const u = uv.getX(k);
+    uv.setX(k, back ? (1 - b) + u * (b - a) : a + u * (b - a));
+  }
+  return g;
+}
+function makePanel(i) {
+  const grp = new THREE.Group();
+  const mk = (side, back) => {
+    const basic = new THREE.MeshBasicMaterial({ map: tex[side] });
+    const std = new THREE.MeshStandardMaterial({ map: tex[side], roughness: 0.95 });
+    const m = new THREE.Mesh(panelGeo(i, back), basic);
+    m.userData = { basic, std };
+    sheetMeshes.push(m); return m;
+  };
+  const f = mk('T', false);
+  const r = mk('R', true);
+  r.rotation.y = Math.PI; r.position.z = -0.0012;
+  for (const m of [f, r]) { m.castShadow = true; m.receiveShadow = true; grp.add(m); }
+  return grp;
+}
+const root = new THREE.Group(); scene.add(root);
+const p2 = makePanel(1); root.add(p2);
+const pivL = new THREE.Group(); pivL.position.x = -PW / 2; root.add(pivL);
+const p1 = makePanel(0); p1.position.x = -PW / 2; pivL.add(p1);
+const pivR = new THREE.Group(); pivR.position.x = PW / 2; root.add(pivR);
+const p3 = makePanel(2); p3.position.x = PW / 2; pivR.add(p3);
+
+function applyFold() {
+  const phi = foldT * THREE.MathUtils.degToRad(178.6);
+  pivL.rotation.y = sign * phi; pivR.rotation.y = sign * phi;
+  const e = 0.012 * foldT;
+  pivL.position.z = sign * e; pivR.position.z = -sign * e;
+}
+
+/* ---------- texturas + miniaturas ---------- */
+function rebuild(side) {
+  const ctx = texCanvas[side].getContext('2d');
+  ctx.clearRect(0, 0, TEX_W, TEX_H);
+  if (art[side]) ctx.drawImage(art[side], 0, 0, TEX_W, TEX_H); else drawSample(ctx, side);
+  const thumb = texCanvas[side].toDataURL('image/jpeg', 0.6);
+  if (showGuides) drawGuides(ctx);
+  tex[side].needsUpdate = true;
+  document.getElementById(side === 'T' ? 'miniT' : 'miniR').style.backgroundImage = `url(${thumb})`;
+}
+function rebuildAll() { rebuild('T'); rebuild('R'); updateLabels(); }
+
+function updateLabels() {
+  const m = roleMap();
+  for (const s of ['T', 'R']) {
+    const el = document.getElementById(s === 'T' ? 'miniT' : 'miniR');
+    el.innerHTML = m[s].map((r, i) =>
+      `<div class="cell"><span class="tag ${r === 'Portada' ? 'cover' : ''}"><b>${s === 'T' ? 'T' : 'R'}${i + 1}</b> ${r}</span></div>`).join('');
+  }
+  const f = sign > 0 ? 0 : 2;
+  const cover = `Retiro ${3 - f}`, backc = `Tiro ${3 - f === 3 ? 3 : 1}`;
+  document.getElementById('hudCover').textContent = `Portada: ${cover}`;
+  document.getElementById('hudBack').textContent = `Contraportada: ${backc}`;
+  document.getElementById('explain').textContent =
+    `Con este pliegue el cuerpo ${f === 0 ? 'izquierdo' : 'derecho'} del tiro se dobla hacia delante. ` +
+    `Al cerrar, la portada es ${cover} y la contraportada ${backc}. El retiro se lee espejado respecto del tiro: ` +
+    `detrás de Tiro 1 queda Retiro 3.`;
+}
+
+/* ---------- carga de archivos ---------- */
+const warn = document.getElementById('warn');
+function canvasFrom(src, w, h) {
+  const c = document.createElement('canvas'); c.width = TEX_W; c.height = TEX_H;
+  c.getContext('2d').drawImage(src, 0, 0, TEX_W, TEX_H);
+  c._ratio = w / h; return c;
+}
+function checkRatio(list) {
+  const target = SHEET_MM[0] / SHEET_MM[1];
+  const bad = list.filter(c => Math.abs(c._ratio - target) / target > 0.03);
+  warn.hidden = !bad.length;
+  if (bad.length) warn.textContent = `La proporción del archivo (${bad[0]._ratio.toFixed(3)}) no es 14:8,5 (1,647). Se estiró para encajar; revisa el sangrado o el formato de exportación.`;
+}
+function loadImage(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { res([canvasFrom(img, img.naturalWidth, img.naturalHeight)]); URL.revokeObjectURL(url); };
+    img.onerror = () => rej(new Error('No se pudo leer la imagen.'));
+    img.src = url;
+  });
+}
+let pdfjsReady;
+function getPdfjs() {
+  if (!pdfjsReady) pdfjsReady = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => { const p = window.pdfjsLib;
+      p.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(p); };
+    s.onerror = () => rej(new Error('No se pudo cargar el lector de PDF.'));
+    document.head.appendChild(s);
+  });
+  return pdfjsReady;
+}
+async function loadPdf(file) {
+  const pdfjs = await getPdfjs();
+  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const out = [];
+  for (let n = 1; n <= Math.min(doc.numPages, 2); n++) {
+    const page = await doc.getPage(n);
+    const v1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: TEX_W / v1.width });
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    out.push(canvasFrom(c, v1.width, v1.height));
+  }
+  return out;
+}
+async function readFile(file) {
+  return (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) ? loadPdf(file) : loadImage(file);
+}
+function setName(side, text, loaded) {
+  document.getElementById(side === 'T' ? 'nameT' : 'nameR').textContent = text;
+  document.getElementById(side === 'T' ? 'dropT' : 'dropR').classList.toggle('loaded', loaded);
+}
+async function assign(side, file) {
+  try {
+    setName(side, 'Cargando…', false);
+    const pages = await readFile(file);
+    art[side] = pages[0]; setName(side, file.name, true);
+    if (side === 'T' && pages[1]) { art.R = pages[1]; setName('R', `${file.name} · pág. 2`, true); }
+    checkRatio([art.T, art.R].filter(Boolean));
+    rebuildAll();
+  } catch (err) {
+    setName(side, 'Error al leer', false);
+    warn.hidden = false; warn.textContent = err.message + ' Prueba exportando la cara como PNG o JPG.';
+  }
+}
+for (const s of ['T', 'R']) {
+  const input = document.getElementById(s === 'T' ? 'fileT' : 'fileR');
+  const drop = document.getElementById(s === 'T' ? 'dropT' : 'dropR');
+  input.addEventListener('change', () => { if (input.files[0]) assign(s, input.files[0]); input.value = ''; });
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); drop.classList.remove('over');
+    if (e.dataTransfer.files[0]) assign(s, e.dataTransfer.files[0]); });
+}
+const stage = document.getElementById('stage'), droptip = document.getElementById('droptip');
+stage.addEventListener('dragover', e => { e.preventDefault(); droptip.hidden = false; });
+stage.addEventListener('dragleave', e => { if (!stage.contains(e.relatedTarget)) droptip.hidden = true; });
+stage.addEventListener('drop', async e => {
+  e.preventDefault(); droptip.hidden = true;
+  const files = [...e.dataTransfer.files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  if (files[0]) await assign('T', files[0]);
+  if (files[1]) await assign('R', files[1]);
+});
+document.getElementById('resetArt').addEventListener('click', () => {
+  art.T = art.R = null; warn.hidden = true;
+  setName('T', 'Ejemplo cargado', false); setName('R', 'Ejemplo cargado', false); rebuildAll();
+});
+
+/* ---------- controles ---------- */
+const foldIn = document.getElementById('fold'), foldOut = document.getElementById('foldOut');
+function setFold(v, fromSlider) {
+  foldT = Math.max(0, Math.min(1, v));
+  if (!fromSlider) foldIn.value = Math.round(foldT * 100);
+  foldOut.textContent = Math.round(foldT * 100) + '%';
+  applyFold();
+}
+foldIn.addEventListener('input', () => { stopPlay(); setFold(foldIn.value / 100, true); });
+let foldTween = null;
+document.querySelectorAll('[data-fold]').forEach(b => b.addEventListener('click', () => {
+  stopPlay(); foldTween = { from: foldT, to: +b.dataset.fold / 100, t0: performance.now() };
+}));
+const playBtn = document.getElementById('play');
+function stopPlay() { playing = false; playBtn.classList.remove('on'); playBtn.textContent = 'Animar'; }
+playBtn.addEventListener('click', () => {
+  playing = !playing; playBtn.classList.toggle('on', playing); playBtn.textContent = playing ? 'Detener' : 'Animar';
+  playStart = performance.now() - Math.acos(1 - 2 * foldT) / Math.PI * 3000;
+});
+let playStart = 0;
+document.getElementById('invert').addEventListener('change', e => { sign = e.target.checked ? -1 : 1; applyFold(); rebuildAll(); });
+document.getElementById('guides').addEventListener('change', e => { showGuides = e.target.checked; rebuildAll(); });
+document.getElementById('realistic').addEventListener('change', e => setFaithful(!e.target.checked));
+
+const VIEWS = {
+  iso: [3.3, 2.4, 5.0], front: [0, 0.3, 6.8], back: [0, 0.3, -6.8], top: [0.01, 7.2, 0.5],
+};
+let camTween = null;
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-view]').forEach(x => x.classList.toggle('on', x === b));
+  camTween = { from: camera.position.clone(), to: new THREE.Vector3(...VIEWS[b.dataset.view]), t0: performance.now() };
+}));
+camera.position.set(...VIEWS.iso);
+
+/* ---------- bucle ---------- */
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function resize() {
+  const r = stage.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / r.height;
+  camera.fov = camera.aspect < 1 ? 48 : 32;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+function frame(now) {
+  if (foldTween) {
+    const k = reduce ? 1 : Math.min(1, (now - foldTween.t0) / 700);
+    setFold(foldTween.from + (foldTween.to - foldTween.from) * ease(k));
+    if (k >= 1) foldTween = null;
+  }
+  if (playing) setFold((1 - Math.cos(((now - playStart) / 3000) * Math.PI)) / 2);
+  if (camTween) {
+    const k = reduce ? 1 : Math.min(1, (now - camTween.t0) / 800);
+    camera.position.lerpVectors(camTween.from, camTween.to, ease(k));
+    controls.target.set(0, 0, 0);
+    if (k >= 1) camTween = null;
+  }
+  controls.update();
+  shadeMeshes();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+resize(); applyFold();
+document.fonts.ready.then(rebuildAll); rebuildAll();
+requestAnimationFrame(frame);
+</script>
